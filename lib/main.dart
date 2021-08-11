@@ -74,7 +74,6 @@ class HomeWidget extends StatefulWidget {
 }
 
 class _HomeWidgetState extends State<HomeWidget> {
-  int _counter = 0;
   List<String> todos = ['Get started'];
 
   SnackBar snackBar = new SnackBar(content: Text("Add a TODO"));
