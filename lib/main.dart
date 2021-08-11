@@ -40,10 +40,12 @@ class _AppState extends State<App> {
           if (snapshot.connectionState == ConnectionState.done) {
             return MaterialApp(
                   title: 'TODO',
-                  themeMode: ThemeMode.dark,
+                  themeMode: ThemeMode.light,
                   theme: ThemeData(
                     primarySwatch: Colors.indigo,
+                    brightness: Brightness.dark
                   ),
+                  darkTheme: ThemeData(brightness: Brightness.dark),
                   home: HomeWidget(title: 'TODO'),
                 );
           }
@@ -111,7 +113,9 @@ class _HomeWidgetState extends State<HomeWidget> {
         onPressed: () {
           Navigator.push(context, MaterialPageRoute(builder: (context) => TodoForm(notifyParent: addTodo)));
         },
-        tooltip: 'Increment',
+        tooltip: 'Add TODO',
+        backgroundColor: Colors.indigo,
+        focusColor: Colors.indigo.shade50,
         child: Icon(Icons.add_circle_outline),
       ),
     );
