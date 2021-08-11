@@ -29,7 +29,7 @@ class _AppState extends State<App> {
             return MaterialApp(
               title: 'TODO',
               theme: ThemeData(
-                primaryColor: Colors.blue
+                primarySwatch: Colors.indigo
               ),
               home: Scaffold(
                 body: Center(child: Text('Something went wrong initializing Firebase App' + snapshot.error.toString())),
@@ -40,8 +40,9 @@ class _AppState extends State<App> {
           if (snapshot.connectionState == ConnectionState.done) {
             return MaterialApp(
                   title: 'TODO',
+                  themeMode: ThemeMode.dark,
                   theme: ThemeData(
-                    primarySwatch: Colors.blue,
+                    primarySwatch: Colors.indigo,
                   ),
                   home: HomeWidget(title: 'TODO'),
                 );
@@ -50,7 +51,7 @@ class _AppState extends State<App> {
           return MaterialApp(
             title: 'TODO',
             theme: ThemeData(
-              primarySwatch: Colors.blue,
+              primarySwatch: Colors.indigo,
             ),
             home: Scaffold(
               body: Center(child: Text('Loading...'))
