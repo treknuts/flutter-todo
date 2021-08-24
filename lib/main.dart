@@ -1,8 +1,21 @@
+import 'dart:io';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
+import 'TODO.dart';
 
-void main() {
+void main() async {
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final database = openDatabase(
+      join(await getDatabasesPath(), 'todo_database.db'),
+  );
+
   runApp(App());
 }
 
@@ -40,13 +53,15 @@ class _AppState extends State<App> {
           if (snapshot.connectionState == ConnectionState.done) {
             return MaterialApp(
                   title: 'TODO',
-                  themeMode: ThemeMode.light,
                   theme: ThemeData(
-                    primarySwatch: Colors.indigo,
-                    brightness: Brightness.dark
+                    primaryColor: Colors.blue,
+                    accentColor: Colors.deepOrangeAccent,
+                    floatingActionButtonTheme: FloatingActionButtonThemeData(
+                      backgroundColor: Colors.deepOrange,
+                      elevation: 16.0,
+                    ),
                   ),
-                  darkTheme: ThemeData(brightness: Brightness.dark),
-                  home: HomeWidget(title: 'TODO'),
+                  home: HomeWidget(title: 'TODO', storage: TodoStorage()),
                 );
           }
 
@@ -65,9 +80,10 @@ class _AppState extends State<App> {
 }
 
 class HomeWidget extends StatefulWidget {
-  HomeWidget({Key? key, required this.title}) : super(key: key);
+  HomeWidget({Key? key, required this.title, required this.storage}) : super(key: key);
 
   final String title;
+  final TodoStorage storage;
 
   @override
   _HomeWidgetState createState() => _HomeWidgetState();
@@ -85,10 +101,23 @@ class _HomeWidgetState extends State<HomeWidget> {
   }
 
   @override
+  void initState() {
+    // TODO: https://flutter.dev/docs/cookbook/persistence/reading-writing-files
+    // TODO: Make todos an array instead of a String
+    super.initState();
+    widget.storage.readTodos().then((String value) {
+      setState(() {
+        todos = value;
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        elevation: 12.0,
       ),
       body: Center(
         child:
@@ -113,8 +142,6 @@ class _HomeWidgetState extends State<HomeWidget> {
           Navigator.push(context, MaterialPageRoute(builder: (context) => TodoForm(notifyParent: addTodo)));
         },
         tooltip: 'Add TODO',
-        backgroundColor: Colors.indigo,
-        focusColor: Colors.indigo.shade50,
         child: Icon(Icons.add_circle_outline),
       ),
     );
@@ -149,36 +176,68 @@ class _TodoFormState extends State<TodoForm> {
       appBar: AppBar(
         title: Text("Add a TODO"),
       ),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            TextFormField(
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter some text';
-                }
-                return null;
-              },
-              controller: controller,
+      body: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter some text';
+                    }
+                    return null;
+                  },
+                  controller: controller,
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if(_formKey.currentState!.validate()) {
+                      setState(() {
+                        _todo = controller.text;
+                      });
+                    }
+                    widget.notifyParent(_todo);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(new SnackBar(content: Text("Successfully added " + _todo)));
+                  },
+                  child: const Text("Add"),
+                ),
+              ],
             ),
-            ElevatedButton(
-                onPressed: () {
-                  if(_formKey.currentState!.validate()) {
-                    setState(() {
-                      _todo = controller.text;
-                    });
-                  }
-                  widget.notifyParent(_todo);
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(new SnackBar(content: Text("Successfully added " + _todo)));
-                },
-                child: const Text("Add"),
-            ),
-          ],
-        ),
+          ),
       ),
     );
   }
+} // _todoFormState
 
+class TodoStorage {
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+    return directory.path;
+  }
+
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    return File('$path/todos.txt');
+  }
+
+  Future<File> writeTodos(String todo) async {
+    final file = await _localFile;
+
+    return file.writeAsString('$todo');
+  }
+
+  Future<String> readTodos() async {
+    try {
+      final file = await _localFile;
+
+      final contents = await file.readAsString();
+
+      return contents;
+    } catch (e) {
+      return "";
+    }
+  }
 }
